@@ -1,8 +1,9 @@
 import { GraphQLServer } from "graphql-yoga";
 import faker from "faker";
 
-const TOTAL_USERS = faker.random.number({ min: 5, max: 15 });
-const TOTAL_POSTS = faker.random.number({ min: 15, max: 25 });
+const TOTAL_USERS = faker.random.number({ min: 15, max: 50 });
+const TOTAL_POSTS = faker.random.number({ min: 100, max: 250 });
+const TOTAL_COMMENTS = faker.random.number({ min: 250, max: 500 });
 
 const createUser = () => ({
   id: faker.random.uuid(),
@@ -15,18 +16,27 @@ const createPost = () => ({
   id: faker.random.uuid(),
   title: faker.lorem.sentence(),
   body: faker.lorem.text(),
-  published: faker.random.number({ min: 0, max: 99 }) % 2 === 0
+  published: faker.random.number({ min: 0, max: 99 }) % 2 === 0,
+  author: USERS[faker.random.number({ min: 0, max: TOTAL_USERS - 1 })].id
+});
+
+const createComment = () => ({
+  id: faker.random.uuid(),
+  text: faker.lorem.text(),
+  author: USERS[faker.random.number({ min: 0, max: TOTAL_USERS - 1 })].id,
+  post: POSTS[faker.random.number({ min: 0, max: TOTAL_POSTS - 1 })].id
 });
 
 const USERS = [...Array(TOTAL_USERS).keys()].map(createUser);
 const POSTS = [...Array(TOTAL_POSTS).keys()].map(createPost);
+const COMMENTS = [...Array(TOTAL_COMMENTS).keys()].map(createComment);
 
 const typeDefs = `
   type Query {
     users(query: String): [User!]!
     posts(query: String): [Post!]!
+    comments(query: String): [Comment!]!
     me: User!
-    post: Post!
   }
 
   type User {
@@ -34,6 +44,8 @@ const typeDefs = `
     name: String!
     email: String!
     age: Int
+    posts: [Post!]!
+    comments: [Comment!]!
   }
   
   type Post {
@@ -41,6 +53,15 @@ const typeDefs = `
     title: String!
     body: String!
     published: Boolean!
+    author: User!
+    comments: [Comment!]!
+  }
+
+  type Comment {
+    id: ID!
+    text: String!
+    author: User!
+    post: Post!
   }
 `;
 
@@ -65,8 +86,36 @@ const resolvers = {
           p.body.toLowerCase().includes(args.query.toLowerCase())
       );
     },
-    post() {
-      return POSTS[0];
+    comments(_parent, args, _ctx, _info) {
+      if (!args.query) return COMMENTS;
+
+      return COMMENTS.filter(c =>
+        c.text.toLowerCase().includes(args.query.toLowerCase())
+      );
+    }
+  },
+  Post: {
+    author(parent, _args, _ctx, _info) {
+      return USERS.find(u => u.id === parent.author);
+    },
+    comments(parent, _args, _ctx, _info) {
+      return COMMENTS.filter(c => c.post === parent.id);
+    }
+  },
+  User: {
+    posts(parent, _args, _ctx, _info) {
+      return POSTS.filter(p => p.author === parent.id);
+    },
+    comments(parent, _args, _ctx, _info) {
+      return COMMENTS.filter(c => c.author === parent.id);
+    }
+  },
+  Comment: {
+    post(parent, _args, _ctx, _info) {
+      return POSTS.find(p => p.id === parent.post);
+    },
+    author(parent, _args, _ctx, _info) {
+      return USERS.find(u => u.id === parent.author);
     }
   }
 };
