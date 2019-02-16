@@ -1,7 +1,30 @@
 import { GraphQLServer } from "graphql-yoga";
+import faker from "faker";
+
+const TOTAL_USERS = faker.random.number({ min: 5, max: 15 });
+const TOTAL_POSTS = faker.random.number({ min: 15, max: 25 });
+
+const createUser = () => ({
+  id: faker.random.uuid(),
+  name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+  email: faker.internet.email().toLowerCase(),
+  age: faker.random.number({ min: 18, max: 100 })
+});
+
+const createPost = () => ({
+  id: faker.random.uuid(),
+  title: faker.lorem.sentence(),
+  body: faker.lorem.text(),
+  published: faker.random.number({ min: 0, max: 99 }) % 2 === 0
+});
+
+const USERS = [...Array(TOTAL_USERS).keys()].map(createUser);
+const POSTS = [...Array(TOTAL_POSTS).keys()].map(createPost);
 
 const typeDefs = `
   type Query {
+    users(query: String): [User!]!
+    posts(query: String): [Post!]!
     me: User!
     post: Post!
   }
@@ -23,21 +46,27 @@ const typeDefs = `
 
 const resolvers = {
   Query: {
+    users(_parent, args, _ctx, _info) {
+      if (!args.query) return USERS;
+
+      return USERS.filter(u =>
+        u.name.toLowerCase().includes(args.query.toLowerCase())
+      );
+    },
     me() {
-      return {
-        id: "123abc",
-        name: "John Doe",
-        email: "johndoe@gmail.com",
-        age: 42
-      };
+      return USERS[0];
+    },
+    posts(_parent, args, _ctx, _info) {
+      if (!args.query) return POSTS;
+
+      return POSTS.filter(
+        p =>
+          p.title.toLowerCase().includes(args.query.toLowerCase()) ||
+          p.body.toLowerCase().includes(args.query.toLowerCase())
+      );
     },
     post() {
-      return {
-        id: "1234abcd",
-        title: "Hello, GraphQL",
-        body: "I'm a post!",
-        published: false
-      };
+      return POSTS[0];
     }
   }
 };
