@@ -36,8 +36,10 @@ const createComment = (text = null, author = null, post = null) => ({
   post: post || POSTS[faker.random.number({ min: 0, max: TOTAL_POSTS - 1 })].id
 });
 
-let USERS = [...Array(TOTAL_USERS).keys()].map(() => createUser());
-let POSTS = [...Array(TOTAL_POSTS).keys()].map(() => createPost());
-let COMMENTS = [...Array(TOTAL_COMMENTS).keys()].map(() => createComment());
+const USERS = [...Array(TOTAL_USERS).keys()].map(() => createUser());
+const POSTS = [...Array(TOTAL_POSTS).keys()].map(() => createPost());
+const COMMENTS = [...Array(TOTAL_COMMENTS).keys()].map(() => createComment());
 
-export { USERS, POSTS, COMMENTS, createUser, createPost, createComment };
+const DATA = { USERS, POSTS, COMMENTS };
+
+export { DATA, createUser, createPost, createComment };

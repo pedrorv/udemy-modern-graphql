@@ -1,12 +1,9 @@
 import { GraphQLServer } from "graphql-yoga";
-import {
-  USERS,
-  POSTS,
-  COMMENTS,
-  createUser,
-  createPost,
-  createComment
-} from "./seed";
+import { DATA, createUser, createPost, createComment } from "./seed";
+
+let USERS = [...DATA.USERS];
+let POSTS = [...DATA.POSTS];
+let COMMENTS = [...DATA.COMMENTS];
 
 const typeDefs = `
   type Query {
@@ -18,8 +15,11 @@ const typeDefs = `
 
   type Mutation {
     createUser(data: CreateUserInput): User!
+    deleteUser(id: ID!): User!
     createPost(data: CreatePostInput): Post!
+    deletePost(id: ID!): Post!
     createComment(data: CreateCommentInput): Comment!
+    deleteComment(id: ID!): Comment!
   }
 
   input CreateUserInput {
@@ -100,12 +100,21 @@ const resolvers = {
     createUser(_parent, args, _ctx, _info) {
       const { name, email, age } = args.data;
       const emailTaken = USERS.some(u => u.email === email);
-      if (emailTaken) {
-        throw new Error("Email already taken.");
-      }
+      if (emailTaken) throw new Error("Email already taken.");
 
       const user = createUser(name, email, age);
       USERS.push(user);
+
+      return user;
+    },
+    deleteUser(_parent, args, _ctx, _info) {
+      const { id } = args;
+      const user = USERS.find(u => u.id === id);
+      if (!user) throw new Error("User doesn't exist.");
+
+      USERS = USERS.filter(u => u.id !== id);
+      POSTS = POSTS.filter(p => p.author !== id);
+      COMMENTS = COMMENTS.filter(c => c.author !== id);
 
       return user;
     },
@@ -120,6 +129,16 @@ const resolvers = {
 
       return post;
     },
+    deletePost(_parent, args, _ctx, _info) {
+      const { id } = args;
+      const post = POSTS.find(p => p.id === id);
+      if (!post) throw new Error("Post doesn't exist.");
+
+      POSTS = POSTS.filter(p => p.id !== id);
+      COMMENTS = COMMENTS.filter(c => c.post !== id);
+
+      return post;
+    },
     createComment(_parent, args, _ctx, _info) {
       const { text, author, post } = args.data;
       const userExists = USERS.some(u => u.id === author);
@@ -130,6 +149,15 @@ const resolvers = {
 
       const comment = createComment(text, author, post);
       COMMENTS.push(comment);
+
+      return comment;
+    },
+    deleteComment(_parent, args, _ctx, _info) {
+      const { id } = args;
+      const comment = COMMENTS.find(p => p.id === id);
+      if (!comment) throw new Error("Comment doesn't exist.");
+
+      COMMENTS = COMMENTS.filter(p => p.id !== id);
 
       return comment;
     }
