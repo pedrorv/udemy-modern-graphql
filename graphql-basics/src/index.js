@@ -17,9 +17,28 @@ const typeDefs = `
   }
 
   type Mutation {
-    createUser(name: String!, email: String!, age: Int!): User!
-    createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
-    createComment(text: String!, author: ID!, post: ID!): Comment!
+    createUser(data: CreateUserInput): User!
+    createPost(data: CreatePostInput): Post!
+    createComment(data: CreateCommentInput): Comment!
+  }
+
+  input CreateUserInput {
+    name: String!
+    email: String!
+    age: Int!
+  }
+
+  input CreatePostInput {
+    title: String!
+    body: String!
+    published: Boolean!
+    author: ID!
+  }
+
+  input CreateCommentInput {
+    text: String!
+    author: ID!
+    post: ID!
   }
 
   type User {
@@ -79,7 +98,7 @@ const resolvers = {
   },
   Mutation: {
     createUser(_parent, args, _ctx, _info) {
-      const { name, email, age } = args;
+      const { name, email, age } = args.data;
       const emailTaken = USERS.some(u => u.email === email);
       if (emailTaken) {
         throw new Error("Email already taken.");
@@ -91,7 +110,7 @@ const resolvers = {
       return user;
     },
     createPost(_parent, args, _ctx, _info) {
-      const { title, body, published, author } = args;
+      const { title, body, published, author } = args.data;
       const userExists = USERS.some(u => u.id === author);
 
       if (!userExists) throw new Error("User doesn't exist.");
@@ -102,7 +121,7 @@ const resolvers = {
       return post;
     },
     createComment(_parent, args, _ctx, _info) {
-      const { text, author, post } = args;
+      const { text, author, post } = args.data;
       const userExists = USERS.some(u => u.id === author);
       const postExists = POSTS.some(p => p.id === post);
 
