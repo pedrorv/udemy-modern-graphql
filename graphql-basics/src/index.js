@@ -1,5 +1,12 @@
 import { GraphQLServer } from "graphql-yoga";
-import { USERS, POSTS, COMMENTS } from "./seed";
+import {
+  USERS,
+  POSTS,
+  COMMENTS,
+  createUser,
+  createPost,
+  createComment
+} from "./seed";
 
 const typeDefs = `
   type Query {
@@ -9,11 +16,17 @@ const typeDefs = `
     me: User!
   }
 
+  type Mutation {
+    createUser(name: String!, email: String!, age: Int!): User!
+    createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
+    createComment(text: String!, author: ID!, post: ID!): Comment!
+  }
+
   type User {
     id: ID!
     name: String!
     email: String!
-    age: Int
+    age: Int!
     posts: [Post!]!
     comments: [Comment!]!
   }
@@ -62,6 +75,44 @@ const resolvers = {
       return COMMENTS.filter(c =>
         c.text.toLowerCase().includes(args.query.toLowerCase())
       );
+    }
+  },
+  Mutation: {
+    createUser(_parent, args, _ctx, _info) {
+      const { name, email, age } = args;
+      const emailTaken = USERS.some(u => u.email === email);
+      if (emailTaken) {
+        throw new Error("Email already taken.");
+      }
+
+      const user = createUser(name, email, age);
+      USERS.push(user);
+
+      return user;
+    },
+    createPost(_parent, args, _ctx, _info) {
+      const { title, body, published, author } = args;
+      const userExists = USERS.some(u => u.id === author);
+
+      if (!userExists) throw new Error("User doesn't exist.");
+
+      const post = createPost(title, body, published, author);
+      POSTS.push(post);
+
+      return post;
+    },
+    createComment(_parent, args, _ctx, _info) {
+      const { text, author, post } = args;
+      const userExists = USERS.some(u => u.id === author);
+      const postExists = POSTS.some(p => p.id === post);
+
+      if (!userExists) throw new Error("User doesn't exist.");
+      if (!postExists) throw new Error("Post doesn't exist.");
+
+      const comment = createComment(text, author, post);
+      COMMENTS.push(comment);
+
+      return comment;
     }
   },
   Post: {
