@@ -1,0 +1,20 @@
+{
+  "projects": {
+    "prisma-blog": {
+      "schemaPath": "src/generated/prisma-blog.graphql",
+      "extensions": {
+        "endpoints": {
+          "default": "http://localhost:4466"
+        }
+      }
+    },
+    "prisma-review": {
+      "schemaPath": "src/generated/prisma-review.graphql",
+      "extensions": {
+        "endpoints": {
+          "default": "http://localhost:4477"
+        }
+      }
+    }
+  }
+}
