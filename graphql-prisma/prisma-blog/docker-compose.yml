@@ -15,7 +15,7 @@ services:
             connector: postgres
             host: host.docker.internal
             port: '5432'
-            database: modern_graphql
+            database: prisma_blog
             schema: schema.graphql
             user: postgres
             password: postgres
