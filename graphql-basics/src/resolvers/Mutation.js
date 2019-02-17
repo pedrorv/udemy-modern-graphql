@@ -30,6 +30,21 @@ const Mutation = {
 
     return user;
   },
+  updateUser(_parent, args, { db }, _info) {
+    const { id, data } = args;
+    const { name, email, age } = data;
+    const user = db.users.find(u => u.id === id);
+    if (!user) throw new Error("User doesn't exist.");
+
+    const emailTaken = db.users.some(u => u.email === email);
+    if (emailTaken) throw new Error("Email already taken.");
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.age = age || user.age;
+
+    return user;
+  },
   createPost(_parent, args, { db }, _info) {
     const { title, body, published, author } = args.data;
     const userExists = db.users.some(u => u.id === author);
@@ -48,6 +63,19 @@ const Mutation = {
 
     db.posts = db.posts.filter(p => p.id !== id);
     db.comments = db.comments.filter(c => c.post !== id);
+
+    return post;
+  },
+  updatePost(_parent, args, { db }, _info) {
+    const { id, data } = args;
+    const { title, body, published } = data;
+    const post = db.posts.find(p => p.id === id);
+    if (!post) throw new Error("Post doesn't exist.");
+
+    post.title = title || post.title;
+    post.body = body || post.body;
+    post.published =
+      typeof published === "boolean" ? published : post.published;
 
     return post;
   },
@@ -70,6 +98,16 @@ const Mutation = {
     if (!comment) throw new Error("Comment doesn't exist.");
 
     db.comments = db.comments.filter(p => p.id !== id);
+
+    return comment;
+  },
+  updateComment(_parent, args, { db }, _info) {
+    const { id, data } = args;
+    const { text } = data;
+    const comment = db.comments.find(c => c.id === id);
+    if (!comment) throw new Error("Comment doesn't exist.");
+
+    comment.text = text || comment.text;
 
     return comment;
   }
