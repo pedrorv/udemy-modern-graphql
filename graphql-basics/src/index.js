@@ -113,7 +113,15 @@ const resolvers = {
       if (!user) throw new Error("User doesn't exist.");
 
       USERS = USERS.filter(u => u.id !== id);
-      POSTS = POSTS.filter(p => p.author !== id);
+      POSTS = POSTS.filter(p => {
+        const shouldDelete = p.author === id;
+
+        if (shouldDelete) {
+          COMMENTS = COMMENTS.filter(c => c.post !== p.id);
+        }
+
+        return !shouldDelete;
+      });
       COMMENTS = COMMENTS.filter(c => c.author !== id);
 
       return user;
